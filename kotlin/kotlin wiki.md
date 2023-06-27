@@ -1,5 +1,9 @@
 
 
+
+
+
+
 # parameter default 값
 
 - 아래와 같이 num parameter 가 Int = 1 로 설정된건 값이 없을 때, 1이 default. 입력받은 값이 존재하면 해당 값을 사용
@@ -59,26 +63,4 @@ fun main() {
 
 
 
-
-# String.readObject()
-
-- kotlin 의 확장함수 입니다. String 클래스에 새로운 함수인 readObject 를 추가하는 것을 의미합니다.
-- 아래 예시를 보면 String 에 readObject 라는 메소드인데, reified T 로 제너릭 타입이 return 값과 parameter 입니다.
-- 제네릭 타입이 Int 일 때, string -> Int 로 변환해줍니다.
-
-```kotlin
-inline fun <reified T> String.readObject(): T {
-    return when (T::class) {
-        Int::class -> this.toInt() as T
-        else -> throw IllegalArgumentException("Unsupported type")
-    }
-}
-
-fun main() {
-    val strInt = "100"
-    val intValue: Int = strInt.readObject()
-    println(intValue)  // 100
-}
-
-```
 
