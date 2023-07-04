@@ -40,25 +40,60 @@ fun main() {
 
 
 
-# `<reified T>`
-
-- 코틀린 제네릭 타입 매개변수에 사용됩니다.
 
 
+# 확장함수 
+
+
+
+### String.readObject()
+
+- kotlin 의 확장함수 입니다. String 클래스에 새로운 함수인 readObject 를 추가하는 것을 의미합니다.
+- 아래 예시를 보면 String 에 readObject 라는 메소드인데, reified T 로 제너릭 타입이 return 값과 parameter 입니다.
+- 제네릭 타입이 Int 일 때, string -> Int 로 변환해줍니다.
 
 ```kotlin
-class ReifiedExample {
-
-    inline fun <reified T> printGenericType() {
-        print(T::class.simpleName)
+inline fun <reified T> String.readObject(): T {
+    return when (T::class) {
+        Int::class -> this.toInt() as T
+        else -> throw IllegalArgumentException("Unsupported type")
     }
 }
 
+fun main() {
+    val strInt = "100"
+    val intValue: Int = strInt.readObject()
+    println(intValue)  // 100
+}
+
+```
+
+
+
+### fun Int.factorial(): Int
+
+- Int 뒤에 . 을 붙여서 factorial() 확장함수를 만듭니다.
+
+
+
+##### source
+
+- 아래 소스는 Int 확장함수를 만들었습니다. factorial 를 통해 입력 값을 받고, product 확장함수를 통해 1 부터 this 까지 곱합니다.
+
+```kotlin
+fun Int.factorial(): Int = (1..this).product()
+fun Iterable<Int>.product(): Int =
+    fold(1) { acc, i -> acc * i }
 
 fun main() {
-    ReifiedExample().printGenericType<String>()
+    val number = 5
+    println("result is ${number.factorial()}")
 }
 ```
+
+
+
+
 
 
 
