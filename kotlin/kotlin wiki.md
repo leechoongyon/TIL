@@ -99,3 +99,33 @@ fun main() {
 
 
 
+# In
+
+```kotlin
+(people in names) // names 에 people 이 있는지 확인하는 코드. java contains 랑 비슷
+```
+
+
+
+# List
+
+- Kotlin 의 List interface 는 immuable list 를 의미합니다.
+
+```kotlin
+val list2: List<Int> = listOf(1,2,3) // 수정 X
+var list2: List<Int> = listOf(1,2,3) // 수정 O
+```
+
+
+
+# 프로퍼티
+
+- Kotlin 에서 프로퍼티는 클래스나 객체 내에 선언된 속성입니다.
+
+```kotlin
+class Person {
+  var mutableProperty: Int = 10 // 수정 가능
+}
+```
+
+
