@@ -129,3 +129,45 @@ class Person {
 ```
 
 
+
+# Mutable 컬렉션
+
+- mutable 컬렉션은 수정 가능한 컬렉션입니다. 
+
+```kotlin
+val mutableList: MutableList<Int> = mutableListOf(1,2)
+mutableList.add(3)
+```
+
+
+
+# ? 와 !!
+
+
+
+### ?
+
+- 변수 또는 타입에 선언되면 null 일 수 있는 것을 나타냅니다.
+
+```kotlin
+val name: String? = null	// name 은 변수명, String 타입
+```
+
+
+
+### !!
+
+- nullable -> non-null 강제로 캐스팅합니다.
+- 만약 str이 null 이면 NPE 가 떨어집니다.
+- 될 수 있으면 !!  는 안쓰는 것이 좋습니다. 당장의 코드가 not-null 이라 !! 을 써도 나중에 코드를 변경했을 때, 체크하기 어렵기 때문입니다.
+
+```kotlin
+val length = str!!.length	// str 을 non-null 로 강제 캐스팅
+```
+
+
+
+
+
+
+
