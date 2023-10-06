@@ -88,3 +88,88 @@ fun printNoInline(arg: Int, action: (Int) -> Unit) {
 
 
 
+# 확장함수 
+
+
+
+### String.readObject()
+
+- kotlin 의 확장함수 입니다. String 클래스에 새로운 함수인 readObject 를 추가하는 것을 의미합니다.
+- 아래 예시를 보면 String 에 readObject 라는 메소드인데, reified T 로 제너릭 타입이 return 값과 parameter 입니다.
+- 제네릭 타입이 Int 일 때, string -> Int 로 변환해줍니다.
+
+```kotlin
+inline fun <reified T> String.readObject(): T {
+    return when (T::class) {
+        Int::class -> this.toInt() as T
+        else -> throw IllegalArgumentException("Unsupported type")
+    }
+}
+
+fun main() {
+    val strInt = "100"
+    val intValue: Int = strInt.readObject()
+    println(intValue)  // 100
+}
+
+```
+
+
+
+### fun Int.factorial(): Int
+
+- Int 뒤에 . 을 붙여서 factorial() 확장함수를 만듭니다.
+
+
+
+##### source
+
+- 아래 소스는 Int 확장함수를 만들었습니다. factorial 를 통해 입력 값을 받고, product 확장함수를 통해 1 부터 this 까지 곱합니다.
+
+```kotlin
+fun Int.factorial(): Int = (1..this).product()
+fun Iterable<Int>.product(): Int =
+    fold(1) { acc, i -> acc * i }
+
+fun main() {
+    val number = 5
+    println("result is ${number.factorial()}")
+}
+```
+
+
+
+### 주의사항
+
+- 클래스 내부에 확장함수를 선언하는건 좋지 않습니다. 가시성을 제한합니다.
+
+```kotlin
+package org.example.extension
+
+class ExtensionFunctionExample3 {
+    fun String.isAddr(): Boolean = length == 13
+}
+
+private fun String.isAddr(): Boolean = length == 13
+
+fun main() {
+    // 클래스 내부에 확장함수를 쓰는건 될 수 있으면 피하는게 좋습니다. 가시성을 제한합니다. 또한, 레퍼런스도 쓸 수 없습니다.
+    val isAddr = ExtensionFunctionExample3().apply { "12345".isAddr() }
+    println(isAddr)
+
+    // 이런 방식으로 쓰는게 좋습니다.
+    val str = "abcde12345"
+    val isAddrBoolean = "abc".isAddr()
+    val isAddrBooleanReference = str::isAddr // 오류 안남
+    println(isAddrBoolean)
+}
+```
+
+
+
+
+
+
+
+
+
