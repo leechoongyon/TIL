@@ -245,3 +245,32 @@ val length = str!!.length	// str 을 non-null 로 강제 캐스팅
 
 
 
+# lateinit
+
+- 늦은 초기화를 의미합니다.
+
+
+
+### 특징
+
+- 초기화 전에 값을 사용할려고 하면 예외가 발생하니 초기화가 필요한 부분에만 사용해야 합니다.
+- 추후 nullable 로 변경 가능합니다.
+
+
+
+### Source
+
+```kotlin
+class Lateinit {
+  private lateinit var no: Int
+  
+  fun init() {
+    no = 10
+  }
+}
+```
+
+
+
+
+
