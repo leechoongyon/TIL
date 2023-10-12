@@ -274,3 +274,64 @@ class Lateinit {
 
 
 
+# Delegates.notNull
+
+- primitive type 초기화 할 때 사용합니다.
+- Int, long 등
+
+
+
+# Use
+
+- 자바에는 try-catch-resource 라는 것을 제공하고 있습니다. 자원을 열었을 때, 구문이 닫히면 자원을 해제하는 것입니다.
+- kotlin 에서는 use 를 사용하여 resource 를 해제할 수 있습니다.
+  - Closeable/AutoCloseable 을 구현한 객체에만 적용됩니다.
+
+```kotlin
+class UseExample {
+    fun readLine(filePath: String): String {
+        BufferedReader(FileReader(filePath))
+            .use { 
+                return it.readLine()
+        }
+    }
+}
+```
+
+
+
+
+
+# data class
+
+- kotlin 의 data class 는 데이터를 보관하고 전달하기 위한 클래스입니다.
+
+
+
+### 특징
+
+equals(), hashCode(), toString(), copy() 등의 메소드를 제공해줘서 편리합니다.
+
+
+
+### source
+
+```kotlin
+data class DataClassExample(val name: String)
+
+fun main() {
+    val dataClassExample = DataClassExample("test")
+    val copy = DataClassExample("test").copy()
+    println(dataClassExample == copy)
+    println(dataClassExample.equals(copy))
+}
+```
+
+
+
+
+
+
+
+
+
