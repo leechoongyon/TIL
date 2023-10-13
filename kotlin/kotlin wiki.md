@@ -335,3 +335,69 @@ fun main() {
 
 
 
+# scope function
+
+### 정의
+
+- 범위 지정 함수는 수신 객체와 수신 객체 지정 람다 두가지 구성요소를 가집니다.
+
+
+
+##### 예시 설명
+
+```kotlin
+// receiver 가 수신 객체, block 이 수신 객체 지정 람다 입니다.
+inline fun <T, R> with(receiver: T, block: T.() -> R): R {
+    return receiver.block()
+}
+```
+
+
+
+### let
+
+- 객체의 컨텍스트에서 블록내 코드를 실행하는 기능입니다. 주어진 객체를 람다 식의 인자로 받아서 블록 내에서 처리합니다.
+
+- 예를 들면, null 이 아닌 경우에 코드를 실행할 때, 지역 변수의 범위를 제한 하는 경우에 사용합니다.
+
+
+
+#####  source
+
+```kotlin
+data class People(var name: String)
+
+fun main() {
+    var person = People("test")
+    // person 이 null 이 아닐 때 수행합니다.
+    person?.let { it -> // person(=it) 는 내부에서만 사용 가능합니다.
+        it.name = it.name + "1234"
+    }
+    println(person)
+}
+```
+
+
+
+### With
+
+- NotNull 객체를 사용하며, 블럭 return 값이 없습니다.
+- 아래와 같은 코드와 같이 NotNull(Person) 객체이면서 return 없는 곳에서 활용 가능합니다.
+
+
+
+##### source
+
+```kotlin
+data class Person(var name: String)
+
+fun main() {
+    var person = Person("test")
+    with(person) {
+        println(name)
+    }
+}
+```
+
+
+
