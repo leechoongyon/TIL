@@ -401,3 +401,57 @@ fun main() {
 
 
 
+### apply
+
+- 수신 객체 람다 내부에서 수신 객체의 함수를 사용하지 않고, 수신 객체 자신을 다시 반환하는 경우에 apply 를 사용합니다.
+- 예를 들면, 객체 초기화가 있습니다.
+
+
+
+##### source
+
+```kotlin
+class ApplyExample {
+    lateinit var name: String
+
+    override fun toString(): String {
+        return name
+    }
+}
+
+fun main() {
+    var example = ApplyExample().apply {
+        name = "init"
+    }
+    println(example)
+}
+```
+
+
+
+### Also
+
+- 수신 객체 람다가 전달된 객체를 사용 하지 않거나, 수신 객체의 속성을 변경하지 않을 때 also 를 사용합니다.
+- apply 와 차이점은 apply 는 수신 객체를 받은 뒤, 속성을 변경시킬 수 있지만 Also 는 변경 안됩니다. 
+- 아래와 같이 값 체크 같은 검증을 수행할 때 사용합니다.
+
+
+
+##### source
+
+```kotlin
+data class AlsoExample(var name: String)
+
+fun main() {
+    // AlsoExample 객체를 변경하지 않고 (수신 객체) 그대로 사용
+    var alsoExample = AlsoExample("test").also {
+        requireNotNull(name)
+    }
+    println(alsoExample)
+}
+```
+
+
+
+
+
