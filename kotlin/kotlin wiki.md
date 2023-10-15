@@ -455,3 +455,35 @@ fun main() {
 
 
 
+### run
+
+- 연산하거나 여러 지역 변수의 범위를 제한하기 위해 run 을 사용합니다.
+
+- 아래 예시를 보면 문자열 + 연산 수행하고, 객체들의 범위를 제한할 수 있습니다.
+
+
+
+##### source
+
+```kotlin
+data class RunExample(var content: String)
+data class RunExample2(var content: String)
+data class RunExample3(var content: String)
+
+
+fun main() {
+    var allContent = run {
+        RunExample("content1").content +
+                RunExample2("content2").content +
+                RunExample3("content3").content
+    }
+    println(allContent)
+}
+```
+
+
+
+
+
+
+
