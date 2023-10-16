@@ -487,3 +487,42 @@ fun main() {
 
 
 
+# Unit
+
+- unit 을 알기 전에 void, Void 개념을 알고 가야합니다.
+- void 는 반환 값이 없다는 것입니다. Void 도 비슷한 의미이지만 void 와 차이점은 void 는 기본형이고, Void 는 참조형입니다.
+- 예를 들면, public void test() {},Class`<Void>`  예시가 있습니다.
+- 다시 돌아와서 Unit 은 자바의 void, Void 를 대신할 수 있는 참조형입니다. 굳이 구분해서 쓸 필요 없이 Unit 하나만 사용해도 됩니다.
+
+
+
+##### Example Source
+
+```kotlin
+fun print(message: String): Unit {
+  println(message)
+}
+```
+
+
+
+##### 주의사항
+
+- Unit 을 Boolean 과 같이 동작하도록 사용하면 안됩니다.
+- Unit 은 값이 없는 것이기에 Unit? 은 의미가 없습니다. 가독성만 복잡하게 할뿐입니다. Boolean 을 사용하는게 낫습니다.
+
+```kotlin
+class UnitExample {
+    fun isEqualsUsingUnit(str: String): Unit? {
+        print("isEquals : ${str.equals("str")}")
+        return null
+    }
+}
+
+fun main() {
+    val unit = UnitExample().isEqualsUsingUnit("str")
+    println(unit)
+}
+```
+
+
