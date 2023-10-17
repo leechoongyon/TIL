@@ -526,3 +526,63 @@ fun main() {
 ```
 
 
+
+
+
+# 리시버
+
+- 리시버란? 객체 외부의 람다 코드 블록을 객체 내부에서 사용하는 것 처럼 작성할 수 있게 해줍니다.
+- 리시버를 사용할 떄는 명시적으로 적어주는게 가독성이 좋습니다.
+
+
+
+##### source example
+
+```kotlin
+// T 가 Receiver. R 를 반환
+// 아래와 같이 리시버를 사용하는 람다를 lambda with receiver 라고 함. 	 
+block : T.() -> R
+
+// 아래는 람다파라미터를 받음
+block : (T) -> R
+```
+
+
+
+##### source example 2
+
+```kotlin
+data class ReceiverExample2(var name: String)
+
+fun main() {
+  // also 는 it 으로 접근 가능
+    ReceiverExample2("test12345").also {
+        println("name : ${it.name}")
+    }
+
+  // apply 는 this 로 접근 가능
+    ReceiverExample2("test12345678").apply {
+        println("name : ${this.name}")
+    }
+}
+
+
+// also 는 람다를 입력으로 받음 -> it 을 사용해서 객체 접근 -> 느낌이 it 이라는 것을 통해 접근하므로 외부에서 접근하는 느낌
+public inline fun <T> T.also(block: (T) -> Unit): T {
+    block(this)
+    return this
+}
+// apply 는 receiver 를 받음 -> this 를 사용해서 객체 접근 -> this 를 통해 접근하니 내부에서 접근하는 느낌
+public inline fun <T> T.apply(block: T.() -> Unit): T {
+    block()
+    return this
+}
+
+```
+
+
+
+
+
+
+
