@@ -586,3 +586,82 @@ public inline fun <T> T.apply(block: T.() -> Unit): T {
 
 
 
+# 프로퍼티
+
+- kotlin 의 프로퍼티는 자바의 필드와 유사하지만 더 많은 기능을 제공합니다.
+
+```kotlin
+var name: String = "test" // kotlin 프로퍼티
+
+private String name = "test";	// java 필드
+```
+
+
+
+##### 특징 1. field
+
+- 추가로 제공하는 기능은 사용자 정의 getter, setter 입니다.
+
+- 아래 예시와 같이 var 을 이용해서 프로퍼티를 만들면 setter, getter 가 디폴트로 생기고, field 도 기본적으로 제공됩니다.
+
+- val 은 읽기 전용이기에 field 를 제공하지 않습니다.
+
+  
+
+##### source (field 사용)
+
+```kotlin
+class PropertyExample {
+    var name: String? = ""
+        // 대문자로 치환. field name 을 가리키는 reference 입니다.
+        get() = field?.uppercase()
+        // 받는 값 그대로 세팅
+        set(value) {
+            field = value
+        }
+}
+
+fun main() {
+    var propertyExample = PropertyExample()
+    propertyExample.name = "HelloWorld..."
+    println(propertyExample.name)
+}
+```
+
+
+
+
+
+##### 특징 2. 확장프로퍼티
+
+- 프로퍼티는 함수여서 확장 프로퍼티를 만들 수 있습니다.
+
+
+
+##### source (확장 프로퍼티)
+
+```kotlin
+// string 에 count 라는 확장 프로퍼티를 만들었습니다.
+val String.count: Int
+    get() = this.length	// val 의 경우 읽기 전용이며, get 을 default 로 생성해줍니다. 여기서는 get 을 재정의했습니다. 
+
+
+fun main() {
+    var text = "HelloWorld..."
+    println(text.count)
+}
+```
+
+
+
+##### 주의사항
+
+- 확장 프로퍼티는 함수와 비슷한 용도입니다. 확장 프로퍼티와 함수를 어떻게 구분해야하는가? 
+- 프로퍼티는 상태를 설정하거나 나타낼 때 설정하는 것이 좋습니다.
+- 프로퍼티는 상태를 get/set 할 때 사용하는 것이 좋으며, 나머지 경우에 함수를 사용하는게 좋을 것이라 생각됩니다.
+- 자바의 경우와 비슷하게 상태는 peroperty, 행위는 메소드로 표현하는 것이 좋다 생각됩니다.
+
+
+
+
+
