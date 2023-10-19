@@ -665,3 +665,54 @@ fun main() {
 
 
 
+# Open
+
+- kotlin 은 기본적으로 클래스와 메서드에서 final 로 선언됩니다. 즉, 상속이 안됩니다.
+- 상속이 필요하다면 open 을 사용해야 합니다.
+
+
+
+##### abstract 차이점
+
+- abstract 는 인스턴스화 할 수 없으나 open 은 가능합니다.
+- abstract 는 하위 클래스에서 필수적으로 override 해야하며, open 클래스는 선별적으로 override 가 가능합니다.
+
+
+
+##### source
+
+```kotlin
+// 상속 가능한 OpenExample class
+open class OpenExample {
+    // 상속 가능한 openMethod
+    open fun openMethod(): String {
+        return "HelloWorld..."
+    }
+
+    // 상속 불가능한 Method
+    fun notOpenMethod(): String {
+        return "NotOpenMethod..."
+    }
+}
+
+class Sub() : OpenExample() {
+    override fun openMethod(): String {
+        return super.openMethod()
+    }
+}
+
+fun main() {
+    var str = Sub().openMethod()
+    println(str)
+
+    str = OpenExample().openMethod()
+    println(str)
+}
+```
+
+
+
+
+
+
+
