@@ -716,3 +716,902 @@ fun main() {
 
 
 
+# stdlib
+
+- 표준 라이브러리입니다. println, java.io 와 같은 공통적인 함수를 만들어놓은 라이브러리입니다.
+- 반복적인 코드는 좋지 않으며, copy-paste 를 하고 있다면 잘못됐다는 것을 인지하고 있어야 합니다.
+- 새로운 공통 함수를 만들어야 한다면 확장 함수로 만드는 것이 좋습니다. (오픈소스 보다 찾기가 쉽습니다)
+
+```kotlin
+MathUtils.abs(xxx) // abs 를 찾기 어려움.
+Int.abs(xxx)   // Int 에서 abs 찾기 쉬움
+```
+
+
+
+
+
+# 프로퍼티 위임
+
+- 프로퍼티가 코드나 내부 동작이 동일하다면 프로퍼티 위임을 통해 재사용할 수 있습니다.
+
+- 아래 예시를 보면 getValue 와  setValue 에 대해서 로깅하는 것이 추가됐습니다.
+- LogProp 을 위임한다면 프로퍼티를 get/set 할 때마다 로그가 출력됩니다.
+
+```kotlin
+fun main() {
+    var propTest: String? by LogProp(null)	// 프로퍼티 위임 (LogProp)
+    println(propTest)   // getValue...null
+    propTest = "test" // setValue... test
+}
+
+private class LogProp<T>(var value: T) {
+    operator fun getValue(
+        ref: Any?,
+        prop: KProperty<*>
+    ): T {
+        println("getValue...$value")
+        return value
+    }
+
+    operator fun setValue(
+        ref: Any?,
+        prop: KProperty<*>,
+        newValue: T
+    ) {
+        println("setValue... $newValue")
+        value = newValue
+    }
+}
+```
+
+
+
+
+
+
+
+# Generic
+
+- 자바의 제너릭과 동일합니다. 타입 안정성을 위해 타입을 강제합니다. 
+
+
+
+##### source
+
+- 아래 소스를 보면 Array<Parent> 로 타입을 규정한 첫번째 케이스는 에러가 안나고, Child 로 타입을 규정한 두번째 케이스는 컴파일 에러가 발생합니다. 이렇게 되는 이유는 메소드 내부에서 Child 가 변경이 될 수도 있기 때문에 규제를 걸어놓은 것입니다.
+
+```kotlin
+open class Parent
+class Child : Parent()
+fun calculateCalories(array: Array<Parent>) {
+    println("size : ${array.size}")
+}
+
+fun main() {
+    val array: Array<Parent> = arrayOf(Parent(), Child())
+    calculateCalories(array)    // size 2
+
+    val errorCase: Array<Child> = arrayOf(Child(), Child())
+    calculateCalories(errorCase)    // compile error. 코틀린 제네릭 타입 불변성때문에 에러 발생
+}
+```
+
+
+
+##### source 2
+
+- 아래 예시를 보면 두번째 케이스는 위와 동일하게 컴파일 에러가 나야할 것 같지만 안나고 정상 동작합니다.
+- 그 이유는 kotlin 의 공변성 때문입니다.
+- Array<T> 는 class Array<T> 이고, List<T> 는 interface List<out E> 로 정의 돼있습니다.
+
+```kot
+fun calculateCalories(list: List<Parent>) {
+    println("size : ${list.size}")
+}
+
+fun main() {
+    val list: List<Parent> = listOf(Parent(), Child())
+    calculateCalories(list)    // size 2
+
+    val list: List<Child> = listOf(Child(), Child())
+    calculateCalories(list)    // size 2
+}
+```
+
+
+
+# 공변성 (out, covariant)
+
+- 쉽게 얘기하면 제약을 푸는 것입니다.
+- 자기 자신과 자식에 대한 객체를 허용합니다.
+
+
+
+### source
+
+- 아래 예시를 보면 case1, case2 가 있습니다. case 1는 컴파일 에러 발생, case2는 공변성으로 인해 정상 처리됩니다.
+- 이 때, 알아둬야할 점은 copyAppliedOut 에서 out 을 적용함으로써 해당 파라미터의 값이 추가되거나 변경되는 것은 하면 안되는 것입니다. 만약 아래 case 1과 같이 Child() 를 source 파라미터로 입력받아서 source 파라미터에 parent 를 상속받은 다른 객체로 변경한다면 제대로 동작하지 않을 것 입니다. 
+  - Ex) source[0] = Sub[0] // Sub 는 Parent 를 상속받은 또 다른 객체 
+- 즉, out 식별자를 사용하는 것은 read 만 가능하다는 것을 의미합니다.
+
+```kotlin
+fun copy(source: Array<Parent>, target: Array<Parent>) {
+    for (i in source.indices) {
+        target[i] = source[i]
+    }
+}
+
+fun copyAppliedOut(source: Array<out Parent>, target: Array<Parent>) {
+    for (i in source.indices - 1) {
+        target[i] = source[i]
+    }
+}
+
+fun main() {
+
+    // case 1.compile error type mismatch
+    val source: Array<Child> = arrayOf(Child(), Child())
+    val target: Array<Parent> = arrayOf(Parent())
+    copy(source, target) // compile error type mismatch
+
+    // case 2. out 적용
+    val source: Array<Child> = arrayOf(Child(), Child())
+    val target: Array<Parent> = arrayOf(Parent(), Parent())
+    copyAppliedOut(source, target) // 정상 처리
+}
+```
+
+
+
+
+
+# 반공변성 (contravariant, in)
+
+- out 이 읽기 전용이였다면 반공변성 in 은 쓰기 전용입니다.
+
+
+
+### source
+
+- 아래 소스를 통해 target 에는 Parent 를 상속받은 Child 가 들어갈 수 있고, 값을 변경하거나 추가할 수 있게 됩니다.
+
+```kotlin
+fun copyAppliedOutIn(source: Array<out Parent>, target: Array<in Parent>) {
+    for (i in source.indices) {
+        target[i] = source[i]
+    }
+}
+
+fun main() {
+    val source: Array<Child> = arrayOf(Child(), Child())
+    val target: Array<Parent> = arrayOf(Child(), Child())
+    copyAppliedOutIn(source, target) // 정상 처리
+
+    println(target.size)    // target 에는 source 의 child 객체들이 들어감
+}
+```
+
+
+
+
+
+# 파라미터 제약조건
+
+- 제네릭 파라미터에 제약조건을 걸고 싶을 때가 있습니다. 
+
+
+
+### source (제약조건 1개)
+
+```kotlin
+// <T: AutoCloseable> 을 제약조건으로 설정함으로써 AutoCloseable 을 구현한 객체만 입력 파라미터 가능
+fun <T: AutoCloseable> release(source: T) {
+    source.close()  
+}
+```
+
+
+
+### source (제약조건 2개 이상)
+
+```kotlin
+interface Sport {
+    fun play()
+}
+
+interface Calories {
+    fun calculate()
+}
+
+// 여러개 제약조건을 설정하기 위해 where 사용 
+fun <T> playAndCalculate(source: T) where T : Sport, T : Calories {
+    source.play()
+    source.calculate()
+}
+```
+
+
+
+
+
+# `<reified T>`
+
+- 코틀린 제네릭 타입 매개변수에 사용됩니다.
+
+- 자바의 Generic 과 유사합니다. 타입을 강제화시키는 것입니다.
+
+```kotlin
+class ReifiedExample {
+
+    inline fun <reified T> printGenericType() {
+        print(T::class.simpleName)
+    }
+}
+
+
+fun main() {
+    ReifiedExample().printGenericType<String>()
+}
+```
+
+
+
+
+
+# 스타 프로젝션 (star projection)
+
+- 쓰기 X, 읽기만 가능합니다.
+
+
+
+### source
+
+- 아래와 같이 List<*> 를 선언해서 어떤 타입이든 받을 수 있습니다. 다만, parameter list 의 값은 변경할 수 없습니다.
+
+```kotlin
+fun print(list: List<*>) {
+    list.forEach { value ->
+        print(value)
+    }
+}
+
+fun main() {
+    print(listOf(1, 2, 3))
+    println()
+    print(listOf("a", "b", "c"))
+}
+```
+
+
+
+
+
+# 새도잉
+
+- 프로퍼티와 파라미터가 같은 이름을 가질 수 있으며, 가독성이 떨어질 수 있습니다.
+
+- 아래와 같은 예시는 쉽게 찾을 수 있습니다. 값을 찍어보면 되니까
+
+```kotlin
+class Tree(val name: String) {
+  fun addTree(name: String) {
+    
+  }
+}
+```
+
+
+
+- 아래와 같이 클래스 타입 파라미터, 메소드 타입 파라미터가 T 로 동일합니다. 둘은 다르며, 구분지어줘야 합니다.
+- 아래 해결방법중 2번 방법이 가독성이 좋다고 생각됩니다.
+
+```kotlin
+interface Tree
+class TreeA : Tree
+class TreeB : Tree
+
+class Forest<T : Tree> {
+
+    fun addTree(tree: T) {
+
+    }
+}
+
+fun main() {
+    val forest = Forest<TreeA>()
+    forest.addTree(TreeA())
+    forest.addTree(TreeB())	// type mismatch
+}
+
+
+// solution 메소드 파라미터 타입을 정의합니다. 
+class Forest<T : Tree> {
+
+    fun <T: Tree> addTree(tree: T) {
+
+    }
+}
+
+// solution2 타입파라미터 이름을 구분지어줍니다.
+class Forest<T : Tree> {
+
+    fun <ST: Tree> addTree(tree: ST) {
+
+    }
+}
+
+```
+
+
+
+
+
+
+
+
+
+# variance 한정자
+
+- variance 한정자는 위에서 설명한 out, in 을 의미합니다. 즉, 타입을 유연하게 해주는 것입니다.
+
+- Cake<T> 는 한정자가 없음으로 불공변성이며, 불공변성이 의미하는 바는 제네릭 타입에 입력되어지는 것들이 서로 연관이 없다는 것입니다. 아래와 같이 T 에 어떤 타입이 오던 관련이 없습니다.
+
+```kotlin
+class Cake<T>
+
+fun main() {
+  val a: Cake<Any> = Cake<String>	// type mismatch
+}
+```
+
+
+
+### source (out)
+
+- 아래 M2Mac 은 서브이고, Notebook 이 상위개념입니다. out 을 통해 서브 인스턴스를 받도록 설정한 예제입니다.  
+
+```kotlin
+class Computer<out T>
+open class Notebook
+class M2Mac() : Notebook()
+
+fun main() {
+    val a: Computer<Notebook> = Computer<M2Mac>() // 정상
+    val b: Computer<M2Mac> = Computer<Notebook> // type mismatch
+
+}
+```
+
+
+
+### source (in)
+
+- out 과 반대입니다.
+
+```kotlin
+class Computer<in T>
+open class Notebook
+class M2Mac() : Notebook()
+
+fun main() {
+    val a: Computer<Notebook> = Computer<M2Mac>() // mismatch
+    val b: Computer<M2Mac> = Computer<Notebook>() // 정상
+}
+```
+
+
+
+
+
+
+
+# Variance(in, out) 안정성
+
+- 자바는 Array 에 대해 Covariant (공변성 = 자신 + 자식 허용) 입니다.
+- 근데 아래와 같은 문제가 발생했습니다. 
+
+```java
+Integer[] nums = {1,2};
+Object[] objs = nums;
+objs[0] = "a";	// RuntimeException 발생
+```
+
+
+
+- 코틀린에서는 위 문제를 해결하기 위해 Array 를 InVariant 로 설정했습니다.
+
+
+
+
+
+# 생성자 함수 대신 팩토리 메소드를 사용
+
+- 자바에서와 마찬가지로 코틀린에서도 생성자 함수 대신 팩토리 메소드를 사용하는 것이 좋습니다.
+
+- 이름을 붙일수 있습니다. 즉, 가독성이 좋아집니다. 
+- 생성자로 만들기 어려운 인스턴스를 만들수 있으니 유연합니다.
+
+
+
+### source
+
+```kotlin
+class SimpleList<T>(var id: T) {
+    override fun toString(): String {
+        return "SimpleList(id=$id)"
+    }
+}
+
+fun <T> createSimpleList(id: T): SimpleList<T>? {
+    return SimpleList(id)
+}
+
+fun main() {
+    // 생성자 사용
+    val simpleList = SimpleList<String>("test")
+    println(simpleList)
+
+    // factory Method 사용
+    val factoryExample = createSimpleList("FactoryMethodExample...")
+    println(factoryExample)
+}
+```
+
+
+
+
+
+# companion object
+
+- 자바의 static 과 비슷하지만 일부 기능을 더 지원합니다.
+
+
+
+### 클래스 내에서 companion object 사용
+
+```kotlin
+class SimpleList<T>(var id: T) {
+    companion object {
+        fun <T> of (id: T): SimpleList<T>? {
+            return SimpleList(id)
+        }
+    }
+}
+
+fun main() {
+    // companion object 사용
+    val example = SimpleList.of("HelloWorld...")
+    println(example)
+}
+```
+
+
+
+
+
+### interface 에서 companion object 사용
+
+- 아래와 같이 interface 에서 companion object 를 사용할 수 있기에 MyList<T> 를 구현한 다른 클래스에서 of 메소드를 재활용 가능합니다. 단, override 는 안됩니다.
+
+```kotlin
+class MyLinkedList<T>(
+    val head: T,
+    val tail: MyLinkedList<T>?
+) : MyList<T> {
+
+}
+
+interface MyList<T> {
+    companion object {
+        fun <T> of(vararg elements: T): MyList<T>? {
+            return null
+        }
+    }
+}
+```
+
+
+
+
+
+
+
+# DSL
+
+- Domain Specific Language 
+- 확장 함수, 람다 함수, 수신 객체 등을 사용하여 표현력을 높일 수 있습니다. 즉, 가독성이 좋아집니다.
+
+
+
+```kotlin
+package org.example.dsl
+
+class QueryBuilder {
+    // columns 자체는 readOnly
+    private val columns: MutableList<String> = mutableListOf()
+    private var tableName: String = ""
+    private var condition: String = ""
+
+    fun select(vararg cols: String) {
+        columns.addAll(cols)
+    }
+
+    fun from(table: String) {
+        tableName = table
+    }
+
+    fun where(cond: String) {
+        condition = cond
+    }
+
+    fun buildQuery(): String {
+        val selectClause = "SELECT ${columns.joinToString(", ")}"
+        val fromClause = "FROM $tableName"
+        val whereClause =
+            if (condition.isNotEmpty()) {
+                "WHERE $condition"
+            } else {
+                ""
+            }
+        return "$selectClause $fromClause $whereClause"
+    }
+}
+
+/**
+ * @param QueryBuilder.() 확장함수를 의미. init 이 확장함수를 의미. 
+ */
+fun initQuery(init: QueryBuilder.() -> Unit): String {
+    val builder = QueryBuilder()
+    // 입력파라미터로 select, from, where 을 받아서 세팅 수행
+    builder.init()
+    // 쿼리 생성
+    return builder.buildQuery()
+}
+
+fun main() {
+    val query = initQuery {
+        select("id", "name")
+        from("test")
+        where("name = 'test'")
+    }
+    println(query)
+}
+
+```
+
+
+
+
+
+# Custom DSL
+
+- DSL 은 복잡한 자료구조, 계층적인 구조를 표현할 때 가독성이 좋습니다.
+- 아래 예제는 TableBuilder 에 DSL 을 만든 예제입니다.
+
+```kotlin
+class TableBuilder {
+    var text = ""
+
+    // String.unaryPlus 라는 기존의 함수가 있는데 이것을 override 한 것
+    operator fun String.unaryPlus() {
+        text += this
+    }
+
+    override fun toString(): String {
+        return "TableBuilder(text='$text')"
+    }
+}
+
+// TableBuilder.() 확장함수를 입력받고 리턴이 없습니다.TableBuilder 에 init 함수를 적용합니다.
+fun table(init: TableBuilder.() -> Unit) = TableBuilder().apply(init)
+
+fun main() {
+    val table = table {
+        +"abc"  // unaryPlus 를 override 했기에 단항연산자가 적용됩니다.
+        +"cde"
+    }
+    println(table)
+    
+    val tableBuilder = TableBuilder().apply {
+        +"abc"
+        +"cde"
+    }
+    println(tableBuilder)
+}
+```
+
+
+
+
+
+
+
+# 함수 타입 정리
+
+- () -> Unit : 아규먼트가 없으며, Unit 을 리턴하는 함수입니다. Unit 은 자바의 void (기본형), Void (참조형) 을 대신하는 용어입니다.
+- (Int) -> Unit : Int 를 아규먼트로 받고, Unit 을 리턴하는 함수입니다.
+- (Int) -> () -> Unit : Int 를 아규먼트로 받고, 함수를 리턴하는 함수입니다. 함수는 아규먼트가 없고, Unit 을 리턴합니다.
+
+
+
+
+
+# 함수 파라미터 받기
+
+- 아래 예시는 함수를 파라미터로 받아 함수를 수행하는 예제입니다.
+
+
+
+```kotlin
+val plus: (Int, Int) -> Int = { a, b -> a + b }
+val multi: (Int, Int) -> Int = { a, b -> a * b }
+
+fun operate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
+    return operation(a, b)
+}
+
+fun main() {
+    println("plus: ${operate(5, 3, plus)}")
+    println("multi: ${operate(5, 3, multi)}")
+}
+```
+
+
+
+
+
+# 익명 함수
+
+- 익명 함수는 일반 함수처럼 만들고 메소드 이름만 빼면 됩니다.
+
+```kotlin
+//  Int 의 확장함수 이며, Int 를 파라미터로 받습니다.
+fun Int.plus(other: Int) = this + other
+
+// myPlus 의 타입은 확장함수를 나타내며, 리시버를 가진 함수 타입이라고 합니다.
+val myPlus = fun Int.(other: Int) = this + other
+
+// myPlus2 의 타입은 Int 를 받아서 Int 를 리턴하는 함수입니다.
+val myPlus2: Int.(Int) -> Int = fun Int.(other: Int) = this + other
+
+fun main() {
+    println("result : ${myPlus.invoke(3, 4)}")
+    println("result : ${myPlus(3, 4)}")
+    println("result : ${3.myPlus(4)}")
+}
+```
+
+
+
+
+
+# 컴포지션
+
+- 객체 지향 프로그래밍에서 한 객체가 다른 객체들을 포함하고, 그 포함된 객체의 기능을 활용하여 복잡한 기능을 수행하는 방법입니다. 객체 간의 관계를 형성하고 코드 재사용성과 모듈화를 촉진하는 개념입니다.
+
+
+
+### source
+
+- 아래 예시와 같이 PdfLoader, ImageLoader 에 FileStream 이라는 객체를 선언하여 모듈을 사용하는 예제입니다. FileStream 뿐만 아니라 여러 객체들을 선언하여 사용할 수 있습니다.
+
+```kotlin
+class FileStream {
+    fun open() {}
+    fun close() {}
+}
+
+class PdfLoader {
+    val fileStream = FileStream()
+    
+    fun init() {
+        fileStream.open()
+    }
+}
+
+class ImageLoader {
+    val fileStream = FileStream()
+
+    fun init() {
+        fileStream.open()
+    }
+}
+```
+
+
+
+
+
+# 연산 또는 액션을 전달할 때는 interface 대신 함수 타입 사용
+
+- 위에서도 설명을 했지만 함수 메소드로 interface 대신 함수 타입으로 넘기는 것이 더 장점이 많다고 생각됩니다. 
+
+
+
+### source
+
+- 아래 코드에서 interface 를 사용한다고 가정하면 Plus, Multi 에 대한 구현체를 각각 만들어야 하니 불편합니다.
+
+```kotlin
+// 함수 타입 사용
+val plus: (Int, Int) -> Int = { a, b -> a + b }
+val multi: (Int, Int) -> Int = { a, b -> a * b }
+
+fun operate(a: Int, b: Int, operation: (Int, Int) -> Int): Int {
+    return operation(a, b)
+}
+
+fun main() {
+    println("plus: ${operate(5, 3, plus)}")
+    println("multi: ${operate(5, 3, multi)}")
+}
+
+
+// interface 사용
+fun operate(a : Int, b: Int, operator: Operator) {
+  return operator.operate(a,b)
+}
+
+interface Operator {
+  fun operate(a: Int, b: Int) {}
+}
+```
+
+
+
+
+
+# sealed
+
+- 클래스 계층 구조를 제한하는 데 사용되는 클래스 한정자입니다. 
+
+
+
+### 특징
+
+
+
+##### 상속 제한
+
+- 클래스는 직접 상속할 수 있는 클래스를 제한합니다. sealed 클래스를 상속하는 클래스는 동일한 파일 내에 선언되어야 합니다. 다른 파일에서 `sealed` 클래스를 상속하는 것은 허용되지 않습니다.
+
+
+
+##### 제한된 하위 클래스
+
+- `sealed` 클래스는 자체적으로 하위 클래스를 가질 수 있습니다. 하위 클래스는 동일한 파일 내에 선언되어야 하며, `sealed` 클래스를 직접 상속해야 합니다. 외부 파일에서 `sealed` 클래스의 하위 클래스를 선언하는 것은 허용되지 않습니다.
+
+
+
+
+
+# 동등성
+
+
+
+### 구조적 동등성
+
+- equals 와 '==' 를 의미합니다. 
+- a == b 에서 a 가 nullable 이 아니면 a.equals(b) 로 변환됩니다.
+- a 가 nullable 이면 a?.equals(b) ? :  (b == null) 로 변환됩니다.
+
+
+
+### 레퍼런스 동등성
+
+- 두 연산자가 같은 객체 주소를 가리키면 return true 합니다.
+
+
+
+### 규약
+
+- 반사적 동작 : x 가 null 아니면 x.equals(x) -> true 리턴해야 합니다
+- 대칭적 동작 : x, y null 이 아니면 x.equals(y) , y.equals(x) 같은 결과 출력해야 합니다.
+- 연속적 동작 : x,y,z 가 null 이 아니면 x.equals(y), y.equals(z) 가 같은 결과이면 z.equals(x) 도 같은 결과여야 합니다.
+- 일관성이 있어야 하며, 빠른시간내에 리턴해야 합니다. 
+
+
+
+# data class 를 동등성 비교
+
+-  객체 주소는 다르지만 값을 비교하고 싶은 요건이 있을 수 있습니다.
+
+
+
+### source
+
+- 아래 예시를 보면 A 로 객체를 생성해서 비교했을 때는 false 이지만, data class 로 생성해서 비교했을 때는 데이터가 같으므로 true 를 리턴합니다.
+- 데이터 비교가 필요할 때는 data class 를 사용하는 것이 좋습니다.
+
+```kotl
+class A(var name: String)
+data class AA(var name: String)
+
+fun main() {
+    val a = A("test")
+    val a1 = A("test")
+    val a2 = A("test")
+
+    println(a == a1)    // false
+    println(a == a2)    // false
+
+    val aa = AA("test")
+    val aa1 = AA("test")
+    val aa2 = AA("test")
+
+    println(aa == aa1)  // true
+    println(aa == aa2) // true
+}
+```
+
+
+
+
+
+# HashCode
+
+- 컬렉션에 데이터를 빠르게 추가하고, 빠르게 조회해야하는 요건이 있습니다.
+- 이 때, 사용될 수 있는게 map, set 이고, 중복을 허용하지 않습니다. 
+- 빠르게 추가하기 위해 중복이 있는 것을 체크해야하고 이를 위해 해시 테이블을 사용합니다. 해시 테이블에 어떤 위치에 데이터를 배치할지는 해시 함수를 통해 계산을 합니다.
+- 즉, 해시 코드를 통해 값을 추가하거나 조회할 때 사용합니다. (빠르고 충돌이 적음)
+
+
+
+### equals , hashcode
+
+- equals 는 값을 비교하며, equals 를 재정의한다면 hashcode 또한 재정의를 해야합니다. 왜냐하면 equals 를 재정의를 해서 비교를 했을 때, 값이 같다면 hashcode 를 통해서도 값이 같아야 하기 때문입니다.
+- equals 와 마찬가지로 같은 값에 대하여 일관적으로 똑같은 값을 리턴해줘야 한다는게 hashcode 의 규약입니다.
+
+
+
+
+
+
+
+# 비교 구문 (Compare)
+
+- 비교 구문 예시입니다.
+
+
+
+### source
+
+- 1개만 비교할 때는 sortedBy, 2개 이상 비교할 때는 sortedWith 를 사용합니다.
+
+```kotlin
+data class Member(val name: String, val age: Int)
+
+fun main() {
+    val members = listOf<Member>(
+        Member("t2", 12),
+        Member("t1", 10)
+    )
+
+    val membersSortByNameAge = members.sortedWith(compareBy({ it.name }, { it.age }))
+    println(membersSortByNameAge)  // Member(name=t1, age=10), Member(name=t2, age=12)
+
+    val membersSortByName = members.sortedBy { it.name }
+    println(membersSortByName) // Member(name=t1, age=10), Member(name=t2, age=12)
+}
+```
+
+
+
+
+
+# 확장 함수 vs 멤버 함수
+
+- 함수를 작성할 때, 클래스 내에 작성한 것인지 확장 함수를 통해 작성할 것인지 하는 상황이 있을 수 있습니다.
+
+
+
+### 정리
+
+- 확장 함수는 객체내 프로퍼티가 없습니다. 즉, 상태를 가지고 있지 않으면 행위만 있습니다. 멤버 함수는 객체 내에 위치해 있기에 상태를 가질 수 있습니다.
+- 확장 함수는 상속, 어노테이션 처리를 하지 않고, 클래스 내부에 없으니 찾기 어려울 수 있습니다. (확장 함수는 package 를 어떻게 가져갈지에 대해서 고민이 필요해 보입니다.)
+
+
+
+
+
